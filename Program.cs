@@ -120,7 +120,7 @@ void ParallelLife()
 
         if (tempCountLife.Count(i => i == countLife) >= 5)
         {
-            Console.WriteLine("Произошло попадание в петлю, конец игры!");
+            Console.Title = $"Поколение {curGen} произошло попадание в петлю, конец игры!";
             Console.ReadLine();
             break;
         }
