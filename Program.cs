@@ -118,7 +118,7 @@ void ParallelLife()
         });
         tempCountLife.Add(countLife);
 
-        if (tempCountLife.Count(i => i == countLife) >= 5)
+        if (tempCountLife.Count(i => i == countLife) >= 10)
         {
             Console.Title = $"Поколение {curGen} произошло попадание в петлю, конец игры!";
             Console.ReadLine();
