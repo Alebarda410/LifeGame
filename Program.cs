@@ -9,6 +9,9 @@ var columnCount = CheckData(Console.ReadLine(), 630);
 Console.Write("Введитете плотность жизни (от 1 до 10): ");
 var denLife = CheckData(Console.ReadLine(), 5);
 
+Console.Write("Отрисовывать процесс игры (y/n)?: ");
+var showState = Console.ReadLine()!.Contains('n');
+
 Console.Clear();
 Console.CursorVisible = false;
 Console.SetCursorPosition(0, 0);
@@ -33,7 +36,7 @@ void ParallelLife()
 {
     var countLife = 0;
     var curGen = 0;
-    var tempCountLife = new List<int>();
+    var tempCountLife = new Queue<int>();
     var torJ = columnCount - 1;
     var torI = rowCount - 1;
     var cpuCount = Environment.ProcessorCount;
@@ -82,27 +85,24 @@ void ParallelLife()
                     iBottom = i + 1;
                 }
 
-                int temp;
+                var temp = 0;
                 if (currentGen[i][j] == 0)
                 {
-                    temp = 0;
-                    if (currentGen[iTop][jLeft] == 1) temp++;
-                    if (currentGen[iTop][j] == 1) temp++;
-                    if (currentGen[iTop][jRight] == 1) temp++;
-                    if (currentGen[i][jLeft] == 1) temp++;
-                    if (temp > 3) continue;
-                    if (currentGen[i][jRight] == 1) temp++;
-                    if (currentGen[iBottom][jLeft] == 1) temp++;
-                    if (currentGen[iBottom][j] == 1) temp++;
-                    if (currentGen[iBottom][jRight] == 1) temp++;
+                    CntOnes();
                     if (temp == 3)
                         nextGen[i][j] = 1;
                 }
 
-                else if (currentGen[i][j] == 1)
+                else
                 {
                     Interlocked.Increment(ref countLife);
-                    temp = 0;
+                    CntOnes();
+                    if (temp is < 2 or > 3)
+                        nextGen[i][j] = 0;
+                }
+
+                void CntOnes()
+                {
                     if (currentGen[iTop][jLeft] == 1) temp++;
                     if (currentGen[iTop][j] == 1) temp++;
                     if (currentGen[iTop][jRight] == 1) temp++;
@@ -111,36 +111,46 @@ void ParallelLife()
                     if (currentGen[iBottom][jLeft] == 1) temp++;
                     if (currentGen[iBottom][j] == 1) temp++;
                     if (currentGen[iBottom][jRight] == 1) temp++;
-                    if (temp is < 2 or > 3)
-                        nextGen[i][j] = 0;
                 }
             }
         });
-        tempCountLife.Add(countLife);
+        tempCountLife.Enqueue(countLife);
 
-        if (tempCountLife.Count(i => i == countLife) >= 10)
+        // если текущее число живых повторяется больше 10 раз за 30 поколений, то конец игры
+        if (tempCountLife.Count(i => i == countLife) > 10)
         {
-            Console.Title = $"Поколение {curGen} произошло попадание в петлю, конец игры!";
+            if (showState) Console.WriteLine($"Поколение {curGen} произошло попадание в петлю, конец игры!");
+            else Console.Title = $"Поколение {curGen} произошло попадание в петлю, конец игры!";
+            
             Console.ReadLine();
             break;
         }
 
-        if (tempCountLife.Count > 50)
+        // потдерживаем хранение информации только о 30 поколениях
+        if (tempCountLife.Count > 30)
         {
-            tempCountLife.Remove(tempCountLife.First());
+            tempCountLife.Dequeue();
         }
 
         for (var i = 0; i < currentGen.Length; i++)
             nextGen[i].CopyTo(currentGen[i], 0);
 
         curGen++;
-        ShowInfo(curGen, countLife);
+        if (showState)
+        {
+            Console.SetCursorPosition(0, 0);
+            Console.WriteLine($"Поколение {curGen}, живых {countLife}");
+        }
+        else
+        {
+            ShowInfo(curGen, countLife);
+        }
     }
 }
 
-void ShowInfo(int genCount, int countLife)
+void ShowInfo(int curGen, int countLife)
 {
-    Console.Title = $"Поколение {genCount}, живых {countLife}";
+    Console.Title = $"Поколение {curGen}, живых {countLife}";
 
     for (var i = 0; i < rowCount; i++)
     {
